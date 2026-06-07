@@ -55,6 +55,4 @@ $pass = 'sua_senha_do_painel';     // Senha da conta (vPanel Password)
 
 • Desenvolvido por:
 
-João Pedro de Almeida Costa
-Guilherme Martins de Sousa
-Nathalia Yasmin Bastos Cardoso
+João Pedro de Almeida Costa / Guilherme Martins de Sousa / Nathalia Yasmin Bastos Cardoso
