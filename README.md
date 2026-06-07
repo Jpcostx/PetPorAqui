@@ -43,7 +43,7 @@ $host = 'sqlXXX.infinityfree.com'; // Host fornecido no painel
 $db   = 'if0_XXXXXX_petporaqui';   // Nome do banco com o prefixo
 $user = 'if0_XXXXXX';              // Seu MySQL Username
 $pass = 'sua_senha_do_painel';     // Senha da conta (vPanel Password)
-
+```
 ### 3. Publicando os Arquivos
 1. No painel do InfinityFree, acesse o File Manager (Gerenciador de Arquivos).
 
