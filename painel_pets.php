@@ -3,7 +3,7 @@
 require_once 'conexao.php';
 
 // LÓGICA DE EXCLUSÃO (DELETE)
-// Verifica se a URL tem um comando de exclusão (ex: painel_pets.php?excluir=5)
+// Verifica se a URL tem um comando de exclusão
 if (isset($_GET['excluir'])) {
     $id = $_GET['excluir'];
     $stmt = $pdo->prepare("DELETE FROM pet WHERE id = ?");
@@ -27,13 +27,11 @@ $pets = $stmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <title>Gerenciar Pets - PetPorAqui</title>
-    <!-- Importa as fontes e o seu arquivo de estilos original -->
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Navegação do Painel -->
     <nav>
         <div class="logotipo">🐾 PetPor<span>Aqui</span> <small style="font-size:1rem; color:var(--opaco);">[Painel Adm]</small></div>
         <ul>
@@ -94,7 +92,6 @@ $pets = $stmt->fetchAll();
         </div>
     </main>
 
-    <!-- Rodapé -->
     <footer>
         <h2 class="logotipo" style="margin-bottom: 10px;">🐾 PetPor<span>Aqui</span></h2>
         <p>PetPorAqui&copy; 2026</p>
