@@ -1,9 +1,9 @@
 // Variáveis Globais
 let petSelecionado = null;
 let estaLogado = false;
-let meuMapa = null; // Nova variável para guardar a instância do mapa
+let meuMapa = null;
 
-// DADOS DOS PETS (Atualizados com Latitude e Longitude reais)
+// DADOS DOS PETS
 const dadosPets = [
     { id: 1, nome: 'Thor', icone: '🐕', lat: -22.9068, lng: -43.1729, especie: 'Cão', idade: '3 anos', porte: 'Médio', img: 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=500', desc: 'Vacinado, castrado, muito brincalhão. Adora crianças e outros cães.', saude: 'Antirrábica, V10, Gripe' },
     { id: 2, nome: 'Luna', icone: '🐱', lat: -22.9711, lng: -43.1822, especie: 'Gata', idade: '2 anos', porte: 'Pequeno', img: 'https://images.pexels.com/photos/104827/cat-pet-animal-domestic-104827.jpeg?auto=compress&cs=tinysrgb&w=500', desc: 'Tranquila, gosta de colo e de dormir ao sol. Boa com crianças maiores.', saude: 'Antirrábica, FIV/FeLV negativa' },
@@ -19,7 +19,7 @@ const dadosPets = [
 function navegar(idPagina) {
     document.querySelectorAll('.pagina').forEach(pagina => {
         pagina.classList.remove('ativo');
-        pagina.style.display = 'none'; // Garante que a página suma para o mapa calcular certo depois
+        pagina.style.display = 'none';
     });
     
     document.querySelectorAll('.link-nav').forEach(link => link.classList.remove('ativo'));
@@ -45,11 +45,11 @@ function navegar(idPagina) {
     }
 }
 
-// RENDERIZAÇÃO DO MAPA (Usando Leaflet)
+// RENDERIZAÇÃO DO MAPA 
 function renderizarMapa() {
-    if (meuMapa) return; // Evita criar o mapa mais de uma vez
+    if (meuMapa) return; 
 
-    // Inicia o mapa centralizado no Rio de Janeiro (ajuste conforme necessário)
+    // Inicia o mapa centralizado no Rio de Janeiro 
     meuMapa = L.map('caixa-mapa').setView([-22.9350, -43.2000], 12);
 
     // Adiciona a camada visual do OpenStreetMap
