@@ -36,7 +36,7 @@ O projeto foi pensado para ser hospedado gratuitamente. Para recriar o ambiente 
 4. Clique em **Admin** para abrir o phpMyAdmin.
 5. Na aba **SQL**, cole e execute o conteúdo do arquivo `script.sql` (disponível neste repositório) para gerar as tabelas e os dados base.
 
-• 2. Configurando a Conexão
+### 2. Configurando a Conexão
 Abra o arquivo `conexao.php` e altere as variáveis com as credenciais fornecidas pelo InfinityFree (encontradas na tela do MySQL Databases):
 ```php
 $host = 'sqlXXX.infinityfree.com'; // Host fornecido no painel
@@ -44,7 +44,7 @@ $db   = 'if0_XXXXXX_petporaqui';   // Nome do banco com o prefixo
 $user = 'if0_XXXXXX';              // Seu MySQL Username
 $pass = 'sua_senha_do_painel';     // Senha da conta (vPanel Password)
 
-• 3. Publicando os Arquivos
+### 3. Publicando os Arquivos
 1. No painel do InfinityFree, acesse o File Manager (Gerenciador de Arquivos).
 
 2. Entre na pasta htdocs.
