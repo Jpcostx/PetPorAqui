@@ -5,7 +5,7 @@ require_once 'conexao.php';
 // Verifica se é edição ou cadastro novo
 $id = $_GET['id'] ?? null;
 
-// BUSCA AS ONGS: Puxa a lista de ONGs do banco para montar as opções
+// BUSCA AS ONGS
 $stmtOngs = $pdo->query("SELECT cnpj, nome FROM ong");
 $listaOngs = $stmtOngs->fetchAll();
 
