@@ -1,9 +1,9 @@
 // Variáveis Globais
 let petSelecionado = null;
 let estaLogado = false;
-let meuMapa = null;
+let meuMapa = null; // Nova variável para guardar a instância do mapa
 
-// DADOS DOS PETS
+// DADOS DOS PETS (Atualizados com Latitude e Longitude reais)
 const dadosPets = [
     { id: 1, nome: 'Thor', icone: '🐕', lat: -22.9068, lng: -43.1729, especie: 'Cão', idade: '3 anos', porte: 'Médio', img: 'https://images.pexels.com/photos/1108099/pexels-photo-1108099.jpeg?auto=compress&cs=tinysrgb&w=500', desc: 'Vacinado, castrado, muito brincalhão. Adora crianças e outros cães.', saude: 'Antirrábica, V10, Gripe' },
     { id: 2, nome: 'Luna', icone: '🐱', lat: -22.9711, lng: -43.1822, especie: 'Gata', idade: '2 anos', porte: 'Pequeno', img: 'https://images.pexels.com/photos/104827/cat-pet-animal-domestic-104827.jpeg?auto=compress&cs=tinysrgb&w=500', desc: 'Tranquila, gosta de colo e de dormir ao sol. Boa com crianças maiores.', saude: 'Antirrábica, FIV/FeLV negativa' },
@@ -17,39 +17,45 @@ const dadosPets = [
 
 // NAVEGAÇÃO
 function navegar(idPagina) {
+    // 1. Esconde todas as abas de forma segura
     document.querySelectorAll('.pagina').forEach(pagina => {
         pagina.classList.remove('ativo');
-        pagina.style.display = 'none';
+        pagina.style.display = 'none'; // Garante que a página suma para o mapa calcular certo depois
     });
     
-    document.querySelectorAll('.link-nav').forEach(link => link.classList.remove('ativo'));
-    
+    // 2. Mostra apenas a aba que foi chamada
     const paginaAlvo = document.getElementById(idPagina);
-    paginaAlvo.classList.add('ativo');
-    paginaAlvo.style.display = 'block';
-    
-    if (event && event.target && event.target.classList.contains('link-nav')) {
-        event.target.classList.add('ativo');
-    } else {
-        const linkMenu = document.querySelector(`nav a[onclick="navegar('${idPagina}')"]`);
-        if (linkMenu) linkMenu.classList.add('ativo');
+    if (paginaAlvo) {
+        paginaAlvo.classList.add('ativo');
+        paginaAlvo.style.display = 'block';
     }
     
+    // 3. Atualiza o botão ativo no menu sem quebrar o código (evitando o erro 'contains')
+    document.querySelectorAll('.link-nav').forEach(link => {
+        link.classList.remove('ativo');
+        
+        // Lê a ação do botão e verifica se é a página atual de forma segura
+        const acaoClique = link.getAttribute('onclick');
+        if (acaoClique && acaoClique.includes(idPagina)) {
+            link.classList.add('ativo');
+        }
+    });
+
     window.scrollTo({top: 0, behavior: 'smooth'});
 
-    // Lógica do Leaflet: Recalcula o tamanho do mapa se a aba aberta for a do mapa
-    if (idPagina === 'mapa' && meuMapa) {
+    // 4. Lógica do Leaflet: Recalcula o tamanho do mapa se a aba aberta for a do mapa
+    if (idPagina === 'mapa' && typeof meuMapa !== 'undefined' && meuMapa) {
         setTimeout(() => {
             meuMapa.invalidateSize();
         }, 100);
     }
 }
 
-// RENDERIZAÇÃO DO MAPA 
+// RENDERIZAÇÃO DO MAPA (Usando Leaflet)
 function renderizarMapa() {
-    if (meuMapa) return; 
+    if (meuMapa) return; // Evita criar o mapa mais de uma vez
 
-    // Inicia o mapa centralizado no Rio de Janeiro 
+    // Inicia o mapa centralizado no Rio de Janeiro (ajuste conforme necessário)
     meuMapa = L.map('caixa-mapa').setView([-22.9350, -43.2000], 12);
 
     // Adiciona a camada visual do OpenStreetMap
