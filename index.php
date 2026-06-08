@@ -1,10 +1,15 @@
 <?php
-session_start();
+    session_start();
 // Conecta com o banco de dados
 require_once 'conexao.php';
 
-// Busca apenas os pets que estão disponíveis para adoção
-$stmt = $pdo->query("SELECT * FROM pet WHERE disponibilidade = 'Disponível'");
+// Busca os pets e faz um JOIN com a tabela ONG para pegar o nome da instituição
+$stmt = $pdo->query("
+    SELECT pet.*, ong.nome AS nome_ong 
+    FROM pet 
+    LEFT JOIN ong ON pet.cnpj_ong = ong.cnpj 
+    WHERE pet.disponibilidade = 'Disponível'
+");
 $petsBanco = $stmt->fetchAll();
 ?>
 <!DOCTYPE html>
@@ -19,8 +24,9 @@ $petsBanco = $stmt->fetchAll();
     <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-   <!-- Navegação Atualizada com PHP -->
-    <nav>
+
+  <!-- Navegação Atualizada com PHP -->
+   <nav>
         <div class="logotipo" onclick="navegar('inicio')">🐾 PetPor<span>Aqui</span></div>
         <ul>
             <li><a class="link-nav ativo" onclick="navegar('inicio')">Início</a></li>
@@ -29,15 +35,20 @@ $petsBanco = $stmt->fetchAll();
             <li><a class="link-nav" onclick="navegar('chat')">Mensagens</a></li>
             
             <?php if(isset($_SESSION['usuario_nome'])): ?>
-                <!-- Se estiver logado, mostra isso: -->
                 <?php if($_SESSION['usuario_tipo'] === 'Administrador' || $_SESSION['usuario_tipo'] === 'ONG'): ?>
                     <li><a href="painel_pets.php" class="link-nav" style="color: var(--coral); font-weight: 800;">Painel Adm</a></li>
+                <?php else: ?>
+                    <li><a href="#" class="link-nav" style="display: none;">Painel Adm</a></li>
                 <?php endif; ?>
                 
                 <li><span style="color: var(--coral); font-weight: 800; margin-left: 15px;">Olá, <?= explode(' ', $_SESSION['usuario_nome'])[0] ?>!</span></li>
                 <li><a href="logout.php" class="btn btn-contorno" style="padding: 8px 20px; text-decoration: none;">Sair</a></li>
+                
+                <li><button id="btn-nav-login" style="display: none;">Entrar</button></li>
+                
             <?php else: ?>
-                <!-- Se NÃO estiver logado, mostra o botão Entrar normal: -->
+                <li><a href="#" class="link-nav" style="display: none;">Painel Adm</a></li>
+                
                 <li><button id="btn-nav-login" class="btn btn-principal" style="padding: 8px 20px;" onclick="abrirModalLogin()">Entrar</button></li>
             <?php endif; ?>
         </ul>
@@ -92,7 +103,12 @@ $petsBanco = $stmt->fetchAll();
                                 <span class="etiqueta"><?= htmlspecialchars($pet['especie']) ?></span>
                                 <span class="etiqueta"><?= htmlspecialchars($pet['localizacao']) ?></span>
                             </div>
-                            <button class="btn btn-contorno" onclick="alert('Detalhes do pet: <?= htmlspecialchars($pet['nome']) ?>. A integração com o modal será feita a seguir!')">Ver Detalhes</button>
+                      		<?php 
+                                $nomePetSeguro = addslashes(htmlspecialchars($pet['nome']));
+                                // Verifica se tem ONG. Se não tiver, escreve "Responsável pelo(a) [Nome do Pet]"
+                                $nomeDaOng = !empty($pet['nome_ong']) ? addslashes(htmlspecialchars($pet['nome_ong'])) : "Responsável pelo(a) " . $nomePetSeguro;
+                            ?>
+                            <button class="btn btn-contorno" onclick="iniciarAdocao('<?= $nomePetSeguro ?>', '<?= $nomeDaOng ?>')">Quero Adotar</button>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -114,41 +130,48 @@ $petsBanco = $stmt->fetchAll();
     </main>
 
     <!-- Seção Chat -->
-    <main id="chat" class="pagina">
-        <h2 style="margin-bottom: 20px;">Suas Conversas</h2>
-        <div class="layout-chat">
-            <div class="barra-lateral-chat" id="barra-lateral-chat">
-                <div class="contato-chat ativo">
-                    <h4>ONG Amigos de Pata</h4>
-                    <p>Sobre: Bob - Ele se adapta bem...</p>
-                </div>
-                <div class="contato-chat">
-                    <h4>Dona Maria</h4>
-                    <p>Sobre: Princesa - Boa tarde! A...</p>
-                </div>
-            </div>
-            
-            <div class="janela-chat">
-                <div class="cabecalho-chat">
-                    <h3 id="nome-tutor-chat">ONG Amigos de Pata</h3>
-                    <span class="etiqueta" id="etiqueta-pet-chat">🐾 Bob</span>
+ <main id="chat" class="pagina">
+        <?php if(isset($_SESSION['usuario_nome'])): ?>
+            <div class="container-chat">
+                
+                <div class="barra-lateral" id="barra-lateral-chat">
+                    <div class="contato-chat ativo" onclick="abrirConversa(this, 'ONG Patas Felizes', 'Rex')">
+                        <h4>ONG Patas Felizes</h4>
+                        <p>Sobre: Rex - Tudo bem, aguardo sua visita!</p>
+                    </div>
+                    <div class="contato-chat" onclick="abrirConversa(this, 'Tutor Particular', 'Mimi')">
+                        <h4>Tutor Particular</h4>
+                        <p>Sobre: Mimi - Olá! A Mimi adora sachê...</p>
+                    </div>
                 </div>
                 
-                <div class="mensagens-chat" id="mensagens-chat">
-                    <p style="text-align: center; color: var(--opaco); margin-bottom: 10px; font-size: 0.85rem;">Ontem</p>
-                    <div class="msg recebida">Olá! Recebemos a notificação de que você se interessou pelo Bob. 🐕</div>
-                    <div class="msg enviada">Oi! Sim, achei ele lindo. Ele se dá bem vivendo em apartamento?</div>
-                    <div class="msg recebida">Ele se adapta super bem, mas como tem bastante energia, precisaria de passeios diários de pelo menos 40 minutos.</div>
-                    <div class="msg enviada">Perfeito! Eu trabalho de casa, então tenho bastante flexibilidade de horários.</div>
-                </div>
-                
-                <div class="area-digitacao-chat">
-                    <input type="text" id="entrada-chat" placeholder="Escreva sua mensagem aqui..." onkeypress="lidarComTecla(event)">
-                    <button onclick="enviarMensagem()">➤</button>
+                <div class="area-mensagens">
+                    <div class="cabecalho-chat">
+                        <h3 id="nome-tutor-chat">ONG Patas Felizes</h3>
+                        <span class="etiqueta" id="etiqueta-pet-chat">🐾 Rex</span>
+                    </div>
+                    <div class="mensagens" id="mensagens-chat">
+                        <p style="text-align: center; color: var(--opaco); margin-bottom: 10px; font-size: 0.85rem;">Ontem</p>
+                        
+                        <?php $primeiroNome = explode(' ', trim($_SESSION['usuario_nome']))[0]; ?>
+                        
+                        <div class="msg enviada">Olá! Tenho interesse em adotar o Rex! Meu nome é <?= htmlspecialchars($primeiroNome) ?>.</div>
+                        <div class="msg recebida">Olá, <?= htmlspecialchars($primeiroNome) ?>! Tudo bem, aguardo sua visita!</div>
+                    </div>
+                   <div class="campo-digitar">
+                        <input type="text" id="input-nova-mensagem" placeholder="Digite sua mensagem..." onkeypress="verificarEnter(event)">
+                        <button class="btn btn-principal" onclick="enviarMensagem()">Enviar</button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </main>
+
+        <?php else: ?>
+            <div style="text-align: center; padding: 100px 20px; background: var(--branco); border-radius: 12px; margin-top: 20px;">
+                <h2 style="color: var(--coral); font-family: 'Baloo 2', cursive; margin-bottom: 15px;">Acesse suas Mensagens</h2>
+                <p style="color: var(--opaco); margin-bottom: 25px; font-size: 1.1rem;">Você precisa estar logado na sua conta para ver o andamento das suas adoções.</p>
+                <button class="btn btn-principal" onclick="abrirModalLogin()">Fazer Login</button>
+            </div>
+        <?php endif; ?> </main>
 
     <!-- Modais Originais -->
     <div class="sobreposicao-modal" id="modalLogin">
@@ -175,14 +198,192 @@ $petsBanco = $stmt->fetchAll();
         <p style="font-size: 0.85rem; color: var(--opaco);">É uma instituição? <a href="cadastro_ong.php" style="color: var(--coral);">Cadastre sua ONG</a></p>
     </div>
 </div>
+    <div class="sobreposicao-modal" id="modalTermo" style="display: none;">
+        <div class="conteudo-modal" style="max-width: 500px; text-align: center;">
+            <button class="fechar-modal" onclick="fecharModalTermo()">×</button>
+            <h2 style="margin-bottom: 20px; font-family: 'Baloo 2', cursive; color: var(--coral);">🐾 Termo de Adoção</h2>
+            
+            <div style="background: var(--creme); padding: 15px; border-radius: 8px; text-align: left; font-size: 0.9rem; margin-bottom: 20px; max-height: 150px; overflow-y: auto;">
+                <p>Ao confirmar o interesse neste animal, eu me comprometo a:</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>Garantir alimentação de qualidade, água fresca e abrigo seguro.</li>
+                    <li>Fornecer cuidados veterinários sempre que necessário.</li>
+                    <li>Não submeter o animal a correntes, abandono ou maus-tratos.</li>
+                    <li>Oferecer amor, paciência e tempo para adaptação.</li>
+                </ul>
+            </div>
+            
+            <label style="display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.9rem; margin-bottom: 20px; cursor: pointer; text-align: left;">
+                <input type="checkbox" id="checkTermo" style="width: 20px; height: 20px; cursor: pointer;">
+                <span>Li e aceito os termos de responsabilidade para adotar o(a) <strong id="nomePetTermo"></strong>.</span>
+            </label>
+            
+            <button class="btn btn-principal" style="width: 100%;" onclick="aceitarTermo()">Assinar e Conversar</button>
+        </div>
+    </div>
 
+   <!-- NOVO: Modal do Termo de Adoção -->
+    <div class="sobreposicao-modal" id="modalTermo" style="display: none; align-items: center; justify-content: center;">
+        <div class="conteudo-modal" style="max-width: 500px; text-align: center;">
+            <button class="fechar-modal" onclick="fecharModalTermo()">×</button>
+            <h2 style="margin-bottom: 20px; font-family: 'Baloo 2', cursive; color: var(--coral);">🐾 Termo de Adoção</h2>
+            
+            <div style="background: var(--creme); padding: 15px; border-radius: 8px; text-align: left; font-size: 0.9rem; margin-bottom: 20px; max-height: 150px; overflow-y: auto;">
+                <p>Ao confirmar o interesse neste animal, eu me comprometo a:</p>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>Garantir alimentação de qualidade, água fresca e abrigo seguro.</li>
+                    <li>Fornecer cuidados veterinários sempre que necessário.</li>
+                    <li>Não submeter o animal a correntes, abandono ou maus-tratos.</li>
+                    <li>Oferecer amor, paciência e tempo para adaptação.</li>
+                </ul>
+            </div>
+            
+            <label style="display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.9rem; margin-bottom: 20px; cursor: pointer; text-align: left;">
+                <input type="checkbox" id="checkTermo" style="width: 20px; height: 20px; cursor: pointer;">
+                <span>Li e aceito os termos para adotar o(a) <strong id="nomePetTermo"></strong>.</span>
+            </label>
+            
+            <button class="btn btn-principal" style="width: 100%;" onclick="aceitarTermo()">Assinar e Conversar</button>
+        </div>
+    </div>
+
+    <!-- Rodapé -->
     <footer>
         <h2 class="logotipo" style="margin-bottom: 10px;">🐾 PetPor<span>Aqui</span></h2>
         <p>PetPorAqui&copy; 2026</p>
     </footer>
 
-    <!-- Scripts -->
+    <!-- Scripts Base -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="script.js"></script>
+
+<script>
+        const statusLoginConfirmado = <?= isset($_SESSION['usuario_nome']) ? 'true' : 'false' ?>;
+        var petEscolhidoParaAdocao = ''; 
+        var ongEscolhidaParaAdocao = ''; // Nova variável para guardar a ONG
+
+        // Agora a função recebe 2 parâmetros: nome do pet e nome da ONG
+        function iniciarAdocao(nomePet, nomeOng) {
+            if (!statusLoginConfirmado) {
+                alert("Você precisa estar logado na sua conta para adotar um pet!");
+                abrirModalLogin(); 
+                return;
+            }
+            
+            petEscolhidoParaAdocao = nomePet;
+            ongEscolhidaParaAdocao = nomeOng; // Guarda o nome para usar depois
+            
+            const modal = document.getElementById('modalTermo');
+            
+            document.getElementById('nomePetTermo').innerText = nomePet;
+            document.getElementById('checkTermo').checked = false; 
+            
+            modal.style.display = 'flex';
+            modal.style.opacity = '1';
+            modal.style.visibility = 'visible';
+            modal.style.pointerEvents = 'auto';
+            modal.style.zIndex = '999999';
+            modal.classList.add('ativo'); 
+        }
+
+        function fecharModalTermo() {
+            const modal = document.getElementById('modalTermo');
+            modal.style.display = 'none';
+            modal.style.opacity = '0';
+            modal.style.visibility = 'hidden';
+            modal.classList.remove('ativo');
+        }
+
+        function aceitarTermo() {
+            const checkbox = document.getElementById('checkTermo');
+            
+            if (!checkbox.checked) {
+                alert("Por favor, marque a caixa aceitando os termos para prosseguir com a adoção.");
+                return;
+            }
+
+            fecharModalTermo();
+            // Manda o pet e a ONG para a criação da conversa
+            criarNovaConversa(petEscolhidoParaAdocao, ongEscolhidaParaAdocao);
+            navegar('chat');
+        }
+
+        // Pega o nome do usuário logado usando PHP direto no JS
+        const primeiroNomeUsuario = "<?= isset($_SESSION['usuario_nome']) ? explode(' ', $_SESSION['usuario_nome'])[0] : '' ?>";
+
+        function abrirConversa(elemento, nomeContato, nomePet) {
+            document.querySelectorAll('.contato-chat').forEach(el => el.classList.remove('ativo'));
+            elemento.classList.add('ativo');
+
+            document.getElementById('nome-tutor-chat').innerText = nomeContato;
+            document.getElementById('etiqueta-pet-chat').innerText = `🐾 ${nomePet}`;
+
+            const mensagensChat = document.getElementById('mensagens-chat');
+            mensagensChat.innerHTML = `
+                <p style="text-align: center; color: var(--opaco); margin-bottom: 10px; font-size: 0.85rem;">Ontem</p>
+                <div class="msg recebida">Olá, ${primeiroNomeUsuario}! Como posso ajudar com o processo de adoção do(a) ${nomePet}?</div>
+                <div class="msg enviada">Oi! Gostaria de saber se o(a) ${nomePet} se dá bem com outros animais.</div>
+                <div class="msg recebida">Sim! É super sociável e adora brincar. Podemos agendar uma visita?</div>
+            `;
+        }
+
+        function criarNovaConversa(nomePet, nomeOng) {
+            document.querySelectorAll('.contato-chat').forEach(el => el.classList.remove('ativo'));
+
+            const barraLateral = document.getElementById('barra-lateral-chat');
+            if(!barraLateral) return; // Trava de segurança caso não esteja logado
+
+            const novoContato = document.createElement('div');
+            novoContato.className = 'contato-chat ativo';
+            novoContato.setAttribute('onclick', `abrirConversa(this, '${nomeOng}', '${nomePet}')`);
+            
+            novoContato.innerHTML = `
+                <h4>${nomeOng}</h4>
+                <p>Sobre: ${nomePet} - Olá! Vi que você aceitou...</p>
+            `;
+            barraLateral.prepend(novoContato); 
+
+            document.getElementById('nome-tutor-chat').innerText = nomeOng;
+            document.getElementById('etiqueta-pet-chat').innerText = `🐾 ${nomePet}`;
+
+            const mensagensChat = document.getElementById('mensagens-chat');
+            mensagensChat.innerHTML = `
+                <p style="text-align: center; color: var(--opaco); margin-bottom: 10px; font-size: 0.85rem;">Agora mesmo</p>
+                <div class="msg enviada">Olá! Sou o(a) ${primeiroNomeUsuario}. Acabei de assinar o termo de responsabilidade e tenho muito interesse em dar um lar para o(a) ${nomePet}. Podemos conversar?</div>
+                <div class="msg recebida">Olá, ${primeiroNomeUsuario}! Ficamos extremamente felizes com o seu interesse no ${nomePet}! 🎉 Me conta um pouco sobre como é a sua rotina e a sua casa!</div>
+            `;
+        }
+  
+        function enviarMensagem() {
+            const campoInput = document.getElementById('input-nova-mensagem');
+            const textoMensagem = campoInput.value.trim(); // .trim() remove espaços vazios
+
+            // Só envia se tiver algum texto digitado
+            if (textoMensagem !== '') {
+                const areaMensagens = document.getElementById('mensagens-chat');
+                
+                // Cria a caixinha da nova mensagem
+                const novaCaixaMensagem = document.createElement('div');
+                novaCaixaMensagem.className = 'msg enviada';
+                novaCaixaMensagem.innerText = textoMensagem; 
+                
+                // Joga a mensagem para dentro da tela de chat
+                areaMensagens.appendChild(novaCaixaMensagem);
+                
+                // Limpa o campo para você digitar a próxima
+                campoInput.value = '';
+                
+                // Faz a tela rolar automaticamente para baixo para ver a mensagem nova
+                areaMensagens.scrollTop = areaMensagens.scrollHeight;
+            }
+        }
+
+        function verificarEnter(event) {
+            // Se a tecla apertada for o "Enter", ele chama a função de enviar
+            if (event.key === 'Enter') {
+                enviarMensagem();
+            }
+        }
+    </script>
 </body>
 </html>
